@@ -1,0 +1,14 @@
+# Puts the remembered fan and LED modes back at startup and after waking
+# from sleep (the laptop forgets them when it sleeps). The udev rule also
+# starts this when the charger is plugged in or out ("charger" fan mode).
+[Unit]
+Description=ThinkPad: restore fan and LED modes
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+StateDirectory=thinkpad
+ExecStart=/usr/local/bin/thinkpad --apply
+
+[Install]
+WantedBy=multi-user.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target

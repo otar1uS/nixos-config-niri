@@ -1,0 +1,8 @@
+# Started by `battery-charge-mode <mode>`: sets the charging limits as root.
+[Unit]
+Description=Battery charging: %i mode
+
+[Service]
+Type=oneshot
+StateDirectory=thinkpad
+ExecStart=/usr/local/bin/battery-charge-mode --apply %i

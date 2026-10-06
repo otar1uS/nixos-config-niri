@@ -1,0 +1,12 @@
+# Puts your last charging mode back at every boot, in case something
+# (a BIOS update, GNOME's "Preserve Battery Health") changed the limits.
+[Unit]
+Description=Battery charging: restore the last mode
+
+[Service]
+Type=oneshot
+StateDirectory=thinkpad
+ExecStart=/usr/local/bin/battery-charge-mode --restore
+
+[Install]
+WantedBy=multi-user.target

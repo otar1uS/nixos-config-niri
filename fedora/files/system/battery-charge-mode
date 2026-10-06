@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# ═══════════════════════════════════════════════════════════════════════════
+#  battery-charge-mode  —  ThinkPad charging modes (Desk / Daily / Travel)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+#  The laptop stops charging at "stop" and only starts again below "start".
+#  Charging to 100% all day wears the battery out; these modes avoid that.
+#
+#    battery-charge-mode           show the current mode
+#    battery-charge-mode daily     switch mode (no password needed)
+#
+#  Switching starts battery-charge@<mode>.service, which runs this same
+#  script as root with --apply. The polkit rule in
+#  /etc/polkit-1/rules.d/50-thinkpad-modes.rules lets you start it.
+
+set -euo pipefail
+
+BAT=/sys/class/power_supply/BAT0
+STATE=/var/lib/thinkpad/battery # the last mode, put back at boot
+
+# ── The modes. Edit here, then run fedora/steps/30-thinkpad.sh again. ────
+#  id     start  stop
+MODES="
+desk    35     40
+daily   75     80
+travel  95     100
+"
+
+# "start stop" for a mode id, or nothing if there's no such mode.
+lookup() { awk -v id="$1" '$1 == id { print $2, $3 }' <<<"$MODES"; }
+
+case "${1:-status}" in
+  status)
+    start=$(cat $BAT/charge_control_start_threshold)
+    stop=$(cat $BAT/charge_control_end_threshold)
+    current=$(awk -v a="$start" -v b="$stop" '$2 == a && $3 == b { print $1 }' <<<"$MODES")
+    echo "${current:-custom} mode: charging starts below $start % and stops at $stop %"
+    ;;
+
+  --apply) # as root, from battery-charge@<mode>.service
+    read -r start stop <<<"$(lookup "${2:-}")"
+    if [ -z "${start:-}" ]; then
+      echo "unknown mode: ${2:-}" >&2
+      exit 1
+    fi
+    # The laptop refuses a start higher than the current stop, so open the
+    # stop to 100 first (always allowed), then set start, then the real stop.
+    echo 100 >$BAT/charge_control_end_threshold
+    echo "$start" >$BAT/charge_control_start_threshold
+    echo "$stop" >$BAT/charge_control_end_threshold
+    echo "$2" >"$STATE"
+    ;;
+
+  --restore) # as root, at boot (battery-charge-restore.service)
+    if [ -f "$STATE" ]; then
+      exec "$0" --apply "$(cat "$STATE")"
+    fi
+    ;;
+
+  *)
+    if [ -n "$(lookup "$1")" ]; then
+      systemctl start "battery-charge@$1.service"
+      exec "$0" status
+    fi
+    echo "usage: battery-charge-mode [status | $(awk 'NF { printf "%s%s", sep, $1; sep = " | " }' <<<"$MODES")]" >&2
+    exit 1
+    ;;
+esac
