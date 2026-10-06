@@ -1,0 +1,42 @@
+// ═══════════════════════════════════════════════════════════════════
+//  input.kdl  —  keyboard, touchpad and the ThinkPad TrackPoint
+// ═══════════════════════════════════════════════════════════════════
+
+input {
+    keyboard {
+        xkb {
+            // Two keyboard languages: English first (the one you start
+            // with), then Georgian ("ge": the standard Georgian layout,
+            // ქ on the Q key, წ on W...).
+            layout "us,ge"
+            // Alt+Shift switches between them. The bar shows which one
+            // is on ("us" / "ge"); clicking it switches too.
+            options "grp:alt_shift_toggle"
+        }
+
+        // Hold a key: wait 300 ms, then repeat 40 times per second.
+        repeat-delay 300
+        repeat-rate 40
+    }
+
+    touchpad {
+        tap               // a light tap counts as a click
+        natural-scroll    // fingers up = page up, like on a phone
+        dwt               // "disable while typing": no accidental palm clicks
+        accel-speed 0.2   // pointer speed, from -1.0 (slow) to 1.0 (fast)
+    }
+
+    // The red stick in the middle of your ThinkPad keyboard.
+    trackpoint {
+        accel-speed 0.0
+    }
+
+    // Moving the mouse over a window focuses it.
+    // max-scroll-amount="0%" means: only if the view doesn't have to
+    // scroll for it. So the screen never jumps around by accident.
+    focus-follows-mouse max-scroll-amount="0%"
+
+    // Pressing the shortcut of the workspace you're already on
+    // takes you back to the one you came from.
+    workspace-auto-back-and-forth
+}

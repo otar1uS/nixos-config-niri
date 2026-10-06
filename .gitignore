@@ -1,0 +1,5 @@
+# `nixos-rebuild build` leaves a shortcut called "result" in this folder.
+# It points at the build output and is not part of your config, so git
+# should ignore it (otherwise `git add .` would save it by accident).
+result
+result-*

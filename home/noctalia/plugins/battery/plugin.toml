@@ -1,0 +1,33 @@
+# The "label" of this plugin: Noctalia reads this file first.
+# id = "<author>/<plugin>", used in config.toml and in `noctalia msg` commands.
+id          = "otari/battery"
+name        = "Battery"
+version     = "1.0.0"
+plugin_api  = 24 # needs Noctalia's plugin API level 24+ (button callbacks, safe commands)
+author      = "otari"
+license     = "GPL-3.0" # based on piero-93/battery-power-management (GPL-3.0)
+icon        = "battery-charging"
+description = "Battery widget with charging modes (Desk / Daily / Travel), power modes, health and time left."
+
+# Programs this plugin runs. battery-charge-mode comes from modules/battery.nix.
+dependencies = ["battery-charge-mode", "powerprofilesctl", "upower"]
+
+# The background part: reads the battery every few seconds.
+[[service]]
+id    = "service"
+entry = "service.luau"
+
+# The part that sits in the bar.
+[[widget]]
+id    = "widget"
+entry = "widget.luau"
+
+# The pop-up that opens when you click the bar part.
+[[panel]]
+id              = "panel"
+entry           = "panel.luau"
+width           = 430
+height          = 330
+placement       = "attached" # hangs from the bar
+position        = "auto"
+open_near_click = true

@@ -1,0 +1,32 @@
+# The "label" of this plugin: Noctalia reads this file first.
+id          = "otari/thinkpad"
+name        = "ThinkPad"
+version     = "1.0.0"
+plugin_api  = 24 # needs Noctalia's plugin API level 24+ (button callbacks, safe commands)
+author      = "otari"
+license     = "MIT"
+icon        = "propeller"
+description = "Temperatures, fan speed and safe fan modes, and the lid-logo LED."
+
+# The program this plugin runs: `thinkpad`, from modules/thinkpad.nix.
+dependencies = ["thinkpad"]
+
+# The background part: reads temperatures and the fan every 3 seconds.
+[[service]]
+id    = "service"
+entry = "service.luau"
+
+# The part in the bar:  [fan] 41°
+[[widget]]
+id    = "widget"
+entry = "widget.luau"
+
+# The pop-up (click the bar part, or Super+Shift+T).
+[[panel]]
+id              = "panel"
+entry           = "panel.luau"
+width           = 430
+height          = 360
+placement       = "attached"
+position        = "auto"
+open_near_click = true

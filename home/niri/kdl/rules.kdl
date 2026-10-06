@@ -1,0 +1,84 @@
+// ═══════════════════════════════════════════════════════════════════
+//  rules.kdl  —  special rules for windows
+// ═══════════════════════════════════════════════════════════════════
+//  A window-rule says: "for windows that MATCH this, do THAT".
+//  A rule with no `match` line applies to every window.
+//  To find a window's app-id and title, run:   niri msg windows
+
+// Rule 1: every window gets rounded corners.
+window-rule {
+    geometry-corner-radius 10   // corner roundness in pixels
+    clip-to-geometry true       // cut the window's content to that shape
+}
+
+// Rule 2: windows you're NOT using become slightly see-through,
+// so the one you ARE using stands out.
+window-rule {
+    match is-active=false
+    opacity 0.95
+}
+
+// Rule 3: Firefox's picture-in-picture video floats on top
+// instead of taking a whole column.
+// r#"..."# is a "raw string": backslashes and quotes inside are kept as-is.
+// "firefox$" means: app-id ENDS with "firefox".
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+
+// Rule 4: frosted glass. Wherever a window is see-through (the terminal,
+// windows you're not using), blur what's behind it instead of showing it
+// sharp. xray false = blur the real windows behind, not just the
+// wallpaper, which looks more natural. (Needs niri 26.04 or newer.)
+window-rule {
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+// Rule 5: Noctalia's Settings window (Super+,) floats in the middle
+// instead of taking a column, like a normal settings dialog.
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+// ── Layer rules: the same idea, for Noctalia's bar and panels ─────────
+// ("layers" are the bar, panels, pop-ups and wallpaper: things that
+// aren't normal windows.)
+
+// The bar, panels, notifications and pop-ups blur the windows behind
+// them too (Noctalia asks for blur by itself; this only turns xray off).
+layer-rule {
+    match namespace="^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd)$"
+    background-effect {
+        xray false
+    }
+}
+
+// The Alt+Tab switcher: blurred background.
+layer-rule {
+    match namespace="noctalia-window-switcher"
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+// In the overview (Super+O), show Noctalia's blurred copy of the wallpaper
+// behind all your workspaces. (Turned on with `backdrop.enabled` in
+// home/noctalia/default.nix.)
+layer-rule {
+    match namespace="^noctalia-backdrop"
+    place-within-backdrop true
+}
+
+// Template for your own rule. Remove the // and fill in an app-id:
+// window-rule {
+//     match app-id="com.mitchellh.ghostty"
+//     default-column-width { proportion 0.33333; }
+// }

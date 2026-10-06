@@ -1,0 +1,147 @@
+// ═══════════════════════════════════════════════════════════════════
+//  binds.kdl  —  keyboard shortcuts
+// ═══════════════════════════════════════════════════════════════════
+//  "Mod" = the Super key (Windows-logo key; ⌘ on the Apple keyboard).
+//  How to read a line:
+//      Mod+Return  hotkey-overlay-title="..."  { spawn "ghostty"; }
+//      └── keys ┘  └──── name in the list ───┘ └─ what it does ─┘
+//
+//  `spawn "a" "b"` runs the command  a b  (each word in its own quotes).
+//  A line `// #"Something"` starts a group in the shortcut list.
+//  Super+Shift+/ opens the searchable list of every shortcut below.
+
+binds {
+
+    // #"Help"
+    Mod+Shift+Slash hotkey-overlay-title="All shortcuts (searchable)" { spawn "noctalia" "msg" "panel-toggle" "kenn/keybind-cheatsheet:cheatsheet"; }
+    Mod+Ctrl+Slash  hotkey-overlay-title="All shortcuts (niri's plain list)" { show-hotkey-overlay; }
+
+    // #"Apps"
+    Mod+Return hotkey-overlay-title="Terminal (Ghostty)" { spawn "ghostty"; }
+    Mod+E      hotkey-overlay-title="Files (Nautilus)" { spawn "nautilus"; }
+    Mod+Y      hotkey-overlay-title="Files in the terminal (Yazi)" { spawn "ghostty" "-e" "yazi"; }
+    Mod+B      hotkey-overlay-title="Browser (Firefox)" { spawn "firefox"; }
+
+    // #"Voice typing"
+    // Press once, talk, press again: the text is typed where your cursor
+    // is. On the Apple keyboard F9 needs fn (without fn it's "next track").
+    F9    hotkey-overlay-title="Voice typing: start / stop" { spawn "voxtype" "record" "toggle"; }
+    Mod+D hotkey-overlay-title="Voice typing: start / stop (D = dictate)" { spawn "voxtype" "record" "toggle"; }
+
+    // #"Desktop panels"
+    // These send a message to Noctalia: `noctalia msg <command>`.
+    // Every command it understands:  noctalia msg --help
+    Mod+Space   hotkey-overlay-title="App launcher" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    Mod+V       hotkey-overlay-title="Clipboard history" { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+    Mod+S       hotkey-overlay-title="Control center" { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
+    Mod+Comma   hotkey-overlay-title="Noctalia settings" { spawn "noctalia" "msg" "settings-toggle"; }
+    Mod+X       hotkey-overlay-title="Power menu" { spawn "noctalia" "msg" "panel-toggle" "session"; }
+    Mod+P       hotkey-overlay-title="Display: size and refresh rate" { spawn "noctalia" "msg" "panel-toggle" "otari/display:panel"; }
+    Mod+Shift+B hotkey-overlay-title="Battery: charging and power mode" { spawn "noctalia" "msg" "panel-toggle" "otari/battery:panel"; }
+    Mod+Shift+T hotkey-overlay-title="ThinkPad: temperatures, fan, lid LED" { spawn "noctalia" "msg" "panel-toggle" "otari/thinkpad:panel"; }
+    // Keep Alt held and press Tab again to move along; let go to pick.
+    Alt+Tab     hotkey-overlay-title="Switch windows (with previews)" { spawn "noctalia" "msg" "window-switcher"; }
+
+    // #"The window you're on"
+    // repeat=false: holding the key down won't close window after window.
+    Mod+Q repeat=false hotkey-overlay-title="Close window" { close-window; }
+    Mod+F       hotkey-overlay-title="Fill the screen width (bar stays)" { maximize-column; }
+    Mod+Shift+F hotkey-overlay-title="Real fullscreen (bar hidden)" { fullscreen-window; }
+    Mod+C       hotkey-overlay-title="Put window in the middle" { center-column; }
+    Mod+R       hotkey-overlay-title="Width: 1/3 → 1/2 → 2/3" { switch-preset-column-width; }
+    Mod+Minus   hotkey-overlay-title="A bit narrower" { set-column-width "-10%"; }
+    Mod+Equal   hotkey-overlay-title="A bit wider" { set-column-width "+10%"; }
+    Mod+Shift+V hotkey-overlay-title="Float window / back into the strip" { toggle-window-floating; }
+    Mod+W       hotkey-overlay-title="Show this column as tabs" { toggle-column-tabbed-display; }
+    Mod+BracketLeft  hotkey-overlay-title="Stack into / out of the left column" { consume-or-expel-window-left; }
+    Mod+BracketRight hotkey-overlay-title="Stack into / out of the right column" { consume-or-expel-window-right; }
+
+    // #"Move focus"
+    // Windows sit in a strip. Left/right = other columns,
+    // up/down = other windows inside the same column.
+    Mod+H     hotkey-overlay-title="Focus left" { focus-column-left; }
+    Mod+L     hotkey-overlay-title="Focus right" { focus-column-right; }
+    Mod+J     hotkey-overlay-title="Focus down" { focus-window-down; }
+    Mod+K     hotkey-overlay-title="Focus up" { focus-window-up; }
+    Mod+Left  hotkey-overlay-title="Focus left" { focus-column-left; }
+    Mod+Right hotkey-overlay-title="Focus right" { focus-column-right; }
+    Mod+Down  hotkey-overlay-title="Focus down" { focus-window-down; }
+    Mod+Up    hotkey-overlay-title="Focus up" { focus-window-up; }
+    Mod+Home  hotkey-overlay-title="Jump to the first window" { focus-column-first; }
+    Mod+End   hotkey-overlay-title="Jump to the last window" { focus-column-last; }
+
+    // #"Move windows"
+    Mod+Ctrl+H     hotkey-overlay-title="Move window left" { move-column-left; }
+    Mod+Ctrl+L     hotkey-overlay-title="Move window right" { move-column-right; }
+    Mod+Ctrl+J     hotkey-overlay-title="Move window down" { move-window-down; }
+    Mod+Ctrl+K     hotkey-overlay-title="Move window up" { move-window-up; }
+    Mod+Ctrl+Left  hotkey-overlay-title="Move window left" { move-column-left; }
+    Mod+Ctrl+Right hotkey-overlay-title="Move window right" { move-column-right; }
+    Mod+Ctrl+Down  hotkey-overlay-title="Move window down" { move-window-down; }
+    Mod+Ctrl+Up    hotkey-overlay-title="Move window up" { move-window-up; }
+
+    // #"Workspaces"
+    // Workspaces are stacked up/down; each one is its own strip.
+    Mod+U      hotkey-overlay-title="Workspace below" { focus-workspace-down; }
+    Mod+I      hotkey-overlay-title="Workspace above" { focus-workspace-up; }
+    Mod+Ctrl+U hotkey-overlay-title="Send window to the workspace below" { move-column-to-workspace-down; }
+    Mod+Ctrl+I hotkey-overlay-title="Send window to the workspace above" { move-column-to-workspace-up; }
+    Mod+Tab    hotkey-overlay-title="Back to the previous workspace" { focus-workspace-previous; }
+    // Also opens when you push the mouse into the top-left corner.
+    Mod+O repeat=false hotkey-overlay-title="Overview of everything (type to launch)" { toggle-overview; }
+    Mod+1 hotkey-overlay-title="Go to workspace 1" { focus-workspace 1; }
+    Mod+2 hotkey-overlay-title="Go to workspace 2" { focus-workspace 2; }
+    Mod+3 hotkey-overlay-title="Go to workspace 3" { focus-workspace 3; }
+    Mod+4 hotkey-overlay-title="Go to workspace 4" { focus-workspace 4; }
+    Mod+5 hotkey-overlay-title="Go to workspace 5" { focus-workspace 5; }
+    Mod+6 hotkey-overlay-title="Go to workspace 6" { focus-workspace 6; }
+    Mod+7 hotkey-overlay-title="Go to workspace 7" { focus-workspace 7; }
+    Mod+8 hotkey-overlay-title="Go to workspace 8" { focus-workspace 8; }
+    Mod+9 hotkey-overlay-title="Go to workspace 9" { focus-workspace 9; }
+    Mod+Shift+1 hotkey-overlay-title="Send window to workspace 1" { move-column-to-workspace 1; }
+    Mod+Shift+2 hotkey-overlay-title="Send window to workspace 2" { move-column-to-workspace 2; }
+    Mod+Shift+3 hotkey-overlay-title="Send window to workspace 3" { move-column-to-workspace 3; }
+    Mod+Shift+4 hotkey-overlay-title="Send window to workspace 4" { move-column-to-workspace 4; }
+    Mod+Shift+5 hotkey-overlay-title="Send window to workspace 5" { move-column-to-workspace 5; }
+    Mod+Shift+6 hotkey-overlay-title="Send window to workspace 6" { move-column-to-workspace 6; }
+    Mod+Shift+7 hotkey-overlay-title="Send window to workspace 7" { move-column-to-workspace 7; }
+    Mod+Shift+8 hotkey-overlay-title="Send window to workspace 8" { move-column-to-workspace 8; }
+    Mod+Shift+9 hotkey-overlay-title="Send window to workspace 9" { move-column-to-workspace 9; }
+
+    // #"Mouse wheel (hold Super)"
+    // cooldown-ms=150: one workspace per wheel "click", not ten at once.
+    Mod+WheelScrollDown cooldown-ms=150 hotkey-overlay-title="Workspace below" { focus-workspace-down; }
+    Mod+WheelScrollUp   cooldown-ms=150 hotkey-overlay-title="Workspace above" { focus-workspace-up; }
+    Mod+WheelScrollRight      hotkey-overlay-title="Focus right" { focus-column-right; }
+    Mod+WheelScrollLeft       hotkey-overlay-title="Focus left" { focus-column-left; }
+    Mod+Shift+WheelScrollDown hotkey-overlay-title="Focus right" { focus-column-right; }
+    Mod+Shift+WheelScrollUp   hotkey-overlay-title="Focus left" { focus-column-left; }
+
+    // #"Screenshots"
+    // Saved in ~/Pictures/Screenshots AND copied to the clipboard.
+    Print       hotkey-overlay-title="Screenshot: pick an area" { screenshot; }
+    Mod+Shift+S hotkey-overlay-title="Screenshot: pick an area" { screenshot; }
+    Ctrl+Print  hotkey-overlay-title="Screenshot: whole screen" { screenshot-screen; }
+    Alt+Print   hotkey-overlay-title="Screenshot: this window" { screenshot-window; }
+
+    // #"Volume, brightness, media"
+    // Through Noctalia, so a pop-up shows the new level. Brightness
+    // changes the screen you're on: the laptop's, or your Dell's own
+    // brightness through the cable (DDC/CI). Also work on the lock screen.
+    XF86AudioRaiseVolume  allow-when-locked=true hotkey-overlay-title="Volume up" { spawn "noctalia" "msg" "volume-up"; }
+    XF86AudioLowerVolume  allow-when-locked=true hotkey-overlay-title="Volume down" { spawn "noctalia" "msg" "volume-down"; }
+    XF86AudioMute         allow-when-locked=true hotkey-overlay-title="Mute" { spawn "noctalia" "msg" "volume-mute"; }
+    XF86AudioMicMute      allow-when-locked=true hotkey-overlay-title="Mute microphone" { spawn "noctalia" "msg" "mic-mute"; }
+    XF86MonBrightnessUp   allow-when-locked=true hotkey-overlay-title="Brightness up" { spawn "noctalia" "msg" "brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Brightness down" { spawn "noctalia" "msg" "brightness-down"; }
+    XF86AudioPlay         allow-when-locked=true hotkey-overlay-title="Play / pause" { spawn "playerctl" "play-pause"; }
+    XF86AudioNext         allow-when-locked=true hotkey-overlay-title="Next track" { spawn "playerctl" "next"; }
+    XF86AudioPrev         allow-when-locked=true hotkey-overlay-title="Previous track" { spawn "playerctl" "previous"; }
+
+    // #"Session"
+    Mod+Alt+L   hotkey-overlay-title="Lock screen" { spawn "noctalia" "msg" "session" "lock"; }
+    // Some apps (games, remote desktop) grab all keys. This takes them back.
+    Mod+Escape allow-inhibiting=false hotkey-overlay-title="Take shortcuts back from an app" { toggle-keyboard-shortcuts-inhibit; }
+    Mod+Shift+P hotkey-overlay-title="Screens off (any key wakes them)" { power-off-monitors; }
+    Mod+Shift+E hotkey-overlay-title="Log out (asks first)" { quit; }
+}

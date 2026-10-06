@@ -1,0 +1,62 @@
+// ═══════════════════════════════════════════════════════════════════
+//  look.kdl  —  how windows look: gaps, borders, shadows, cursor
+// ═══════════════════════════════════════════════════════════════════
+//  Colours are Gruvbox Dark:
+//    orange #fe8019   yellow #d79921   grey #504945
+
+layout {
+    // Space (in pixels) between windows and around the screen edge.
+    gaps 10
+
+    // "never" = don't force the focused window into the middle.
+    // Try "always" if you like the active window centred.
+    center-focused-column "never"
+
+    // Widths that Super+R cycles through: 1/3, 1/2 and 2/3 of the screen.
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    // New windows open at half the screen width.
+    default-column-width { proportion 0.5; }
+
+    // The glowing outline around the window you're using.
+    focus-ring {
+        width 3
+        // Fades from orange to yellow, at a 45° angle.
+        active-gradient from="#fe8019" to="#d79921" angle=45
+        // Colour of the ring on other monitors' focused windows.
+        inactive-color "#504945"
+    }
+
+    // A second, always-visible border. Off, the focus ring is enough.
+    border {
+        off
+    }
+
+    // Soft shadow under every window: gives a "floating" depth look.
+    shadow {
+        on
+        softness 30        // blur of the shadow edge (bigger = softer)
+        spread 5           // how far it reaches out
+        offset x=0 y=5     // pushed 5 px down, like light from above
+        color "#0007"      // black at about 45% strength
+    }
+}
+
+// How strong the frosted-glass blur is (turned on in rules.kdl).
+blur {
+    passes 2        // more passes = stronger, softer blur
+    offset 3.0      // how far each pass reaches
+    noise 0.03      // a little grain, so it looks like real frosted glass
+    saturation 1.0  // 1.0 = keep the colours behind as they are
+}
+
+// The mouse cursor. Bibata is installed in home/niri/default.nix.
+cursor {
+    xcursor-theme "Bibata-Modern-Classic"
+    xcursor-size 24
+    hide-when-typing     // the cursor disappears while you type
+}

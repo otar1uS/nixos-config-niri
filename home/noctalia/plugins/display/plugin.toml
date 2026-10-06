@@ -1,0 +1,33 @@
+# The "label" of this plugin: Noctalia reads this file first.
+id          = "otari/display"
+name        = "Display"
+version     = "1.0.0"
+plugin_api  = 24 # needs Noctalia's plugin API level 24+ (button callbacks, safe commands)
+author      = "otari"
+license     = "MIT"
+icon        = "device-desktop"
+description = "One-tap screen size (scale) and refresh rate per monitor, remembered by kanshi."
+
+# Programs this plugin runs: niri (to read/change screens) and kanshictl
+# (to tell kanshi to re-read ~/.config/kanshi/display.conf).
+dependencies = ["niri", "kanshictl"]
+
+# The background part: knows your screens, saves your choices.
+[[service]]
+id    = "service"
+entry = "service.luau"
+
+# The part that sits in the bar.
+[[widget]]
+id    = "widget"
+entry = "widget.luau"
+
+# The pop-up (click the bar part, or Super+P).
+[[panel]]
+id              = "panel"
+entry           = "panel.luau"
+width           = 440
+height          = 470
+placement       = "attached"
+position        = "auto"
+open_near_click = true
