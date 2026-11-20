@@ -1,4 +1,0 @@
-# git TUI, with delta for its diffs (from home/dev.nix).
-git:
-  pagers:
-    - pager: delta --dark --paging=never

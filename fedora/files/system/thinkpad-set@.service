@@ -1,8 +1,0 @@
-# Started by `thinkpad fan <mode>` / `thinkpad led <mode>` (e.g. %i = fan-charger).
-[Unit]
-Description=ThinkPad: set %i
-
-[Service]
-Type=oneshot
-StateDirectory=thinkpad
-ExecStart=/usr/local/bin/thinkpad --set %i

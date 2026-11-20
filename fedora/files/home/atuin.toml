@@ -1,6 +1,0 @@
-# Searchable shell history, Ctrl+R (from home/dev.nix). Stays on this
-# laptop: nothing is synced unless you set that up.
-style = "compact"
-inline_height = 20      # opens under the prompt, not full screen
-search_mode = "fuzzy"   # type parts of a command in any order
-filter_mode = "global"  # Ctrl+R inside the search switches: all / this folder / ...

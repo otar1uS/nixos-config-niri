@@ -1,2 +1,0 @@
-# Charger plugged in or out -> re-check the fan ("charger" mode).
-SUBSYSTEM=="power_supply", KERNEL=="AC", ACTION=="change", RUN+="/usr/bin/systemctl start --no-block thinkpad-apply.service"
