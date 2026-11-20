@@ -50,6 +50,7 @@ in
     cameractrls # gives cameractrlsgtk4, cameractrls (command line), cameraview
     cameraSettings # the `camera-settings` command behind the launcher entry
     pkgs.v4l-utils # `v4l2-ctl --list-ctrls`: inspect the camera from a terminal
+    pkgs.guvcview # the webcam tool you used on Fedora
   ];
 
   # Replace cameractrls' own launcher entry with ours (same file name, so it

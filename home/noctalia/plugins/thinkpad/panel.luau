@@ -1,6 +1,6 @@
 --!nonstrict
 -- ═══════════════════════════════════════════════════════════════════════════
---  ThinkPad: the pop-up panel (click the fan in the bar, or Super+Shift+T)
+--  ThinkPad: the pop-up panel (click the fan in the bar, or Super+Alt+T)
 -- ═══════════════════════════════════════════════════════════════════════════
 --  ┌──────────────────────────────────────────┐
 --  │  CPU 41°   GPU 40°   SSD 35°   Wi-Fi 44° │

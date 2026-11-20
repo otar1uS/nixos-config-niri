@@ -1,248 +1,258 @@
 # nixos-config
 
-NixOS 26.05 flake for the ThinkPad T14s (hostname `nixos`, user `otari`),
-with a Gruvbox **niri** desktop.
+NixOS (nixos-unstable) flake for the ThinkPad T14s Gen 3 AMD (hostname
+`nixos`, user `otari`), with the **Umbriel** compositor and the **Noctalia**
+shell.
+
+Why Umbriel and not COSMIC: Umbriel and Noctalia are made by the same team
+and built to work together. Your Noctalia bar, plugins (Battery, Display,
+ThinkPad), lock screen and login screen carry over unchanged, and Umbriel's
+scrolling layout works like niri, so your shortcuts keep working. COSMIC
+would replace all of that with its own panel and applets.
 
 | Job | Pick |
 |---|---|
-| Window manager | **niri** (scrolling tiling) |
-| Login screen | **Noctalia Greeter** on greetd (C++, synced with the bar's look) |
-| Voice typing | **Voxtype** + NVIDIA **Parakeet** model, offline (F9 / Super+D) |
-| Webcam | **Snapshot** ("Camera": photos, videos) + **cameractrls** ("Camera Settings", remembered) |
-| Keyboard | English + Georgian, **Alt+Shift** switches |
-| Night light, weather | Noctalia, for Vakiri, Kakheti |
-| Backups | **restic** (prepared in `modules/backup.nix`, off until you pick a destination) |
-| Bar, launcher, notifications, lock, wallpaper, Alt+Tab | **Noctalia v5** (`noctalia`) |
-| Battery charging modes (Desk / Daily / Travel) | your **Battery** panel (`home/noctalia/plugins/battery`) |
-| Screen size and refresh rate | your **Display** panel (`home/noctalia/plugins/display`) |
-| Temperatures, fan modes, lid-logo LED | your **ThinkPad** panel (`home/noctalia/plugins/thinkpad`) |
-| Auto-lock (10 min) and screen off (11 min) | Noctalia |
-| Which screens are on (laptop off when docked) | **kanshi** |
-| Terminal | **Ghostty** |
-| File managers | **Nautilus** (mouse), **Yazi** (keyboard, in the terminal) |
-| Prompt | **Starship** |
-| Image viewer | **Loupe** |
-| Clipboard history | Noctalia (built in) |
-| Screenshots | niri built-in |
-| Old X11 apps | **xwayland-satellite** |
+| Compositor | **Umbriel** (scrolling layout; dwindle/master/stacking per workspace) |
+| Bar, launcher, notifications, lock, OSD, clipboard, screenshots, Alt+Tab | **Noctalia v5** |
+| Login screen | **Noctalia Greeter** on greetd, synced with Noctalia's look |
+| Colours | from your wallpaper, applied to Noctalia, Umbriel, foot, GTK, btop |
+| Screens (laptop off when docked) | **kanshi** + your **Display** panel |
+| Battery modes (Docked / Drain / Pause / Balanced / Full) | `battery-mode` + your **Battery** panel |
+| Fan modes, lid LED, temperatures | `thinkpad` + your **ThinkPad** panel |
+| Terminal / shell / prompt | **foot** / **fish** / **starship** |
+| Voice typing | **Voxtype** + NVIDIA **Parakeet**, offline (F9) |
+| Keyboard | English + Georgian, **both Alt keys** switch |
+| Browser | **Brave** (default), Firefox |
+| Disk | LUKS2 + btrfs (zstd), declared in `disko.nix` |
+| Backups | **restic** (`modules/backup.nix`, off until you pick a destination) |
 
-## Apply / undo
+Everything comes from one channel, nixos-unstable, prebuilt by
+cache.nixos.org (Umbriel, Noctalia and the greeter included).
+
+---
+
+## 1. Before you wipe Fedora: back up
+
+The install **erases the whole disk**. Copy these to an external drive
+(replace `/run/media/otari/DRIVE`):
 
 ```sh
-cd ~/nixos-config
-git add .                                    # flakes only see files git knows about
-nixos-rebuild build --flake ~/nixos-config#nixos   # optional: test only, changes nothing
-sudo nixos-rebuild switch --flake ~/nixos-config#nixos   # apply (alias: rebuild)
+B=/run/media/otari/DRIVE/fedora-backup
+mkdir -p "$B"
 
-sudo nixos-rebuild switch --rollback         # undo the last switch
+# Projects: list anything not pushed to GitHub first
+for d in ~/code/*/; do (cd "$d" 2>/dev/null && git rev-parse 2>/dev/null &&
+  [ -n "$(git status --porcelain; git log --branches --not --remotes --oneline)" ] &&
+  echo "UNPUSHED: $d"); done
 
-upgrade                                      # newest versions of everything, then apply
+rsync -aHAX --info=progress2 \
+  ~/code ~/Documents ~/Pictures ~/Videos ~/Music ~/Downloads ~/Backups ~/keyring-backup \
+  ~/.ssh ~/.gnupg ~/.claude ~/.claude.json ~/.gemini ~/.bootdev.yaml \
+  ~/.local/share/keyrings ~/.local/share/fish/fish_history \
+  ~/.config/BraveSoftware ~/.mozilla \
+  ~/.var/app/com.vscodium.codium/config/VSCodium ~/.vscode-oss \
+  "$B"/
 ```
 
-`upgrade` updates both channels, builds, shows a list of what changes
-(e.g. `noctalia 5.2.0 -> 5.2.1`) and asks y/n before applying. Run it every
-week or two so you never fall behind. Afterwards commit `flake.lock` in git:
-it records the exact versions, so you can always go back to ones that worked.
+- `~/.ssh` and `~/.local/share/keyrings` are **secrets**: keep that drive safe
+  (or encrypt it).
+- Brave: turning on **Brave Sync** is an easier way to keep tabs and passwords.
+- `~/code/*/node_modules` and Unity `Library/` folders are rebuildable; add
+  `--exclude node_modules --exclude Library` to skip them.
+- Noctalia's settings don't need a backup: this repo recreates them.
+- Push this repo first: `git push -u origin feat/umbriel-noctalia`.
 
-### Stable vs unstable
+## 2. Install
 
-| From **unstable** (newest) | From **stable** (nixos-26.05) |
+1. Download the **NixOS minimal ISO (unstable)** from
+   https://nixos.org/download, write it to a USB stick, boot it (F12 at the
+   Lenovo logo). Secure Boot must be off.
+2. Get online: `sudo nmtui` (Wi-Fi), then:
+
+```sh
+sudo -i
+nix-shell -p git
+git clone https://github.com/otar1uS/nixos-config-niri /tmp/nixos-config
+cd /tmp/nixos-config && git switch feat/umbriel-noctalia
+
+# Check the disk ID in disko.nix matches (KIOXIA ... 82DPG6HUQBQK):
+ls -l /dev/disk/by-id/ | grep nvme
+
+# ERASES THE DISK. Asks for the new disk password (you'll type it at every boot).
+nix --experimental-features 'nix-command flakes' run github:nix-community/disko/latest -- \
+  --mode destroy,format,mount ./disko.nix
+
+# Optional: compare detected hardware with hardware-configuration.nix
+nixos-generate-config --no-filesystems --show-hardware-config
+
+nixos-install --flake /tmp/nixos-config#nixos --no-root-passwd
+nixos-enter --root /mnt -c 'passwd otari'     # your login password
+
+# Put the repo where the config expects it
+mkdir -p /mnt/home/otari && cp -a /tmp/nixos-config /mnt/home/otari/nixos-config
+nixos-enter --root /mnt -c 'chown -R otari:users /home/otari/nixos-config'
+reboot
+```
+
+(If you'd rather use the graphical installer: install with encryption, then
+copy `/etc/nixos/hardware-configuration.nix` over the one here, delete
+`./disko.nix` from the imports in `configuration.nix`, and run
+`sudo nixos-rebuild boot --flake ~/nixos-config#nixos`.)
+
+## 3. First login
+
+1. Disk password, then your password on the Noctalia login screen.
+2. `gh auth login` (GitHub; then `git push` never asks again).
+3. Restore your backup into `~` (rsync back). Then:
+   `atuin import fish` (old history into Ctrl+R) and `rustup default stable`.
+4. Plug in the Dell: the laptop screen turns off by itself.
+5. Press **Super+Shift+/** to see every shortcut.
+
+VSCodium says "OS keyring couldn't be identified"? Add
+`"password-store": "gnome-libsecret"` to `~/.vscode-oss/argv.json`.
+
+## Daily use
+
+| Type | What it does |
 |---|---|
-| niri, xwayland-satellite, screen-sharing portal | the system base: kernel, systemd, sound, network |
-| Noctalia, Noctalia Greeter (login screen), kanshi | greetd, the login manager (so you can always log in) |
-| claude-code, VS Code (change fast) | your apps: Firefox, Ghostty, Nautilus, Discord... |
-| | the graphics driver (Mesa): it must be the oldest version in use, see `modules/unstable.nix` |
+| `rebuild` | apply changes to this config |
+| `upgrade` | newest versions of everything, shows the diff, asks y/n |
+| `cleanup` | free disk space now (also runs weekly, keeps the last 10 versions) |
+| `se brave` | search packages |
+| `sudo nixos-rebuild switch --rollback` | undo the last rebuild |
 
-The list lives in `modules/unstable.nix`. To move something to unstable, add
-its name there.
+These are fish abbreviations: they expand to the real command when you
+press space. Flakes only see files git knows about, so `git add` new files
+before `rebuild`. After `upgrade`, commit `flake.lock`: it records exact
+versions, so you can always go back.
 
-Always use the `--flake ~/nixos-config#nixos` form (or the `rebuild` alias):
-plain `sudo nixos-rebuild switch` doesn't know where your config lives.
-
-For big changes (a different login screen or desktop), use `boot` instead of
-`switch`: it means "use this next time the computer starts", so your running
-session isn't disturbed. Then `reboot`.
-
-**Safety net:** every rebuild is kept as an entry in the boot menu (the last
-10, see `programs.nh.clean`). If something goes wrong, restart and pick the
-entry below the top one using the arrow keys.
+**Safety net:** every rebuild is a boot menu entry (last 10). If something
+breaks, reboot and pick the one below the top.
 
 ## Files
 
 ```
 ~/nixos-config/
-├── flake.nix                 inputs (nixpkgs, Home Manager) and wiring
-├── flake.lock                exact versions of the inputs (don't edit by hand)
-├── configuration.nix         the system: boot, network, sound, packages
-├── hardware-configuration.nix   disks + LUKS. Generated, do not edit
-├── home.nix                  your apps, git, bash. Imports the files in home/
-├── modules/
-│   ├── unstable.nix          which parts come from the unstable channel
-│   ├── niri.nix              SYSTEM: niri, login screen, fonts, services
-│   ├── battery.nix           SYSTEM: the charging modes (Desk/Daily/Travel)
-│   ├── thinkpad.nix          SYSTEM: fan modes, lid LED, the `thinkpad` command
-│   └── backup.nix            SYSTEM: automatic encrypted backups (off until set up)
+├── flake.nix                 inputs (nixos-unstable, Home Manager, disko, hardware) and wiring
+├── flake.lock                exact versions (don't edit; `upgrade` updates it)
+├── configuration.nix         the machine: boot, nix, network, sound, locale, you
+├── hardware-configuration.nix  detected hardware (kernel modules, CPU)
+├── disko.nix                 disk layout: LUKS2 + btrfs subvolumes (used once at install)
+├── modules/                  SYSTEM (needs root)
+│   ├── desktop.nix           Umbriel, Noctalia, login screen, keyring, portals, fonts
+│   ├── dev.nix               Docker, libvirt/virt-manager, nix-ld, direnv
+│   ├── battery.nix           charging modes and the `battery-mode` command
+│   ├── thinkpad.nix          fan modes, lid LED, the `thinkpad` command
+│   └── backup.nix            restic backups (off until set up)
+├── home.nix                  YOU: imports the files below
 └── home/
-    ├── niri/
-    │   ├── default.nix       glues the .kdl pieces together and CHECKS them
-    │   └── kdl/
-    │       ├── startup.kdl     programs started at login
-    │       ├── input.kdl       keyboard, touchpad, TrackPoint
-    │       ├── outputs.kdl     empty on purpose: kanshi owns the screens
-    │       ├── look.kdl        gaps, focus ring, shadows, cursor
-    │       ├── animations.kdl  window and workspace motion
-    │       ├── rules.kdl       per-window rules
-    │       └── binds.kdl       keyboard shortcuts
-    ├── noctalia/
-    │   ├── default.nix       the shell: its settings, checked while building
-    │   └── plugins/
-    │       ├── battery/      the Battery widget + panel
-    │       ├── display/      the Display widget + panel
-    │       └── thinkpad/     the ThinkPad widget + panel (temps, fan, LED)
-    ├── kanshi.nix            which screens are on, per situation
-    ├── dev.nix               delta, atuin, tldr, lazygit, bat, gh, git defaults
-    ├── voice.nix             voice typing (Voxtype + Parakeet)
-    ├── camera.nix            webcam apps, and keeping its settings
-    ├── ghostty.nix           terminal
-    ├── yazi.nix              terminal file manager
-    ├── starship.nix          prompt
-    └── theme.nix             icons, dark mode + fonts for GTK apps
+    ├── umbriel/              compositor: general, input, look, binds, rules (.nix each)
+    ├── noctalia/             shell settings + plugins/ (battery, display, thinkpad)
+    ├── kanshi.nix            screen profiles (docked / laptop)
+    ├── theme.nix             GTK dark mode, Adwaita icons/cursor/font
+    ├── shell.nix             fish, abbreviations, starship, zoxide, eza, navi
+    ├── foot.nix              terminal
+    ├── dev.nix               git, delta, gh, lazygit, atuin, herdr, npm prefix
+    ├── packages.nix          CLI tools and languages
+    ├── apps.nix              desktop apps + default apps
+    ├── nvim/                 your LazyVim config (config/ is linked, editable)
+    ├── voice.nix, camera.nix, yazi.nix
 ```
 
-The rule: `modules/` is for the machine, `home/` is for you. One topic per
-file. niri's settings are plain `.kdl` files (niri's own language, same syntax
-as its docs). Nix joins them into `~/.config/niri/config.kdl` and runs
-`niri validate` on the result while building, so a typo stops the rebuild
-instead of breaking your desktop.
+Umbriel's settings are Nix attribute sets with the same names as its docs
+(`[input.keyboard] layout = "us"` is `input.keyboard.layout = "us";`). They
+are merged into `~/.config/umbriel/config.toml` and **checked by Umbriel
+while building**, so a typo stops the rebuild instead of breaking the
+desktop. Noctalia's settings are checked the same way.
 
-## First login
-
-Press **Super+Shift+/** to see every shortcut.
-
-The Gruvbox colours, your Gruvbox wallpaper and the bar layout are already
-set from `home/noctalia/default.nix`. More wallpapers: drop pictures into
-`~/Pictures/Wallpapers`. Anything you change in Noctalia's Settings
-(**Super+,**) is saved to `~/.local/state/noctalia/settings.toml` and wins over
-the Nix settings. Delete that file to go back to exactly what Nix says.
-
-Try: the **battery** in the bar (charging modes), the **monitor icon** next
-to it (screen size and refresh rate), **Alt+Tab**, and **Super+O** then just
-start typing an app name.
-
-Touchpad: swipe three fingers left/right to scroll through windows, up/down to
-switch workspaces. Push the mouse into the top-left corner (or Super+O) for
-the overview.
-
-GTK apps (Nautilus, Loupe, file dialogs) get the same Gruvbox colours from
-Noctalia (`theme.templates` in `home/noctalia/default.nix`).
-
-## Shortcut cheat sheet
+## Shortcuts
 
 | Keys | Action |
 |---|---|
-| Super+Shift+/ | All shortcuts, searchable |
-| F9 (fn+F9 on Apple) or Super+D | Voice typing: start / stop |
-| Alt+Shift | Switch English / Georgian |
-| Super+Enter | Terminal |
-| Super+Space | App launcher |
+| Super+Shift+/ | All shortcuts on screen |
+| Super+Space or Super+D | App launcher |
+| Super+T / Super+Shift+T | herdr in foot / plain foot (also Super+Enter) |
 | Super+E / Super+Y | Nautilus / Yazi |
-| Super+B | Firefox |
-| Super+V | Clipboard history |
+| F9 or Super+Alt+D | Voice typing: start / stop |
+| Both Alt keys | English / Georgian |
 | Super+S | Control center |
-| Super+, | Noctalia settings |
 | Super+X | Power menu |
-| Super+P | Display panel: screen size, refresh rate |
-| Super+Shift+B | Battery panel: charging mode, power mode |
-| Super+Shift+T | ThinkPad panel: temperatures, fan mode, lid LED |
-| Alt+Tab | Switch windows (with previews) |
 | Super+Alt+L | Lock |
+| Super+Ctrl+V | Clipboard history |
+| Super+Shift+W / Super+Alt+W | Wallpapers / Wallhaven browser |
+| Super+Shift+, | Noctalia settings |
+| Super+Shift+. | Kaomoji |
+| Super+B | Battery panel: charging mode, power mode |
+| Super+Shift+D | Display panel: screen size, refresh rate |
+| Super+Alt+T | ThinkPad panel: temperatures, fan, lid LED |
+| Super+Alt+R | Start/stop screen recording |
+| Print or Super+Shift+S | Screenshot an area (Ctrl+Print: screen, Alt+Print: window) |
+| Alt+Tab | Switch windows |
 | Super+Q | Close window |
+| Super+O | Overview (or mouse to the top-left corner); start typing to launch |
 | Super+H/J/K/L or arrows | Move focus |
 | Super+Ctrl+H/J/K/L | Move window |
-| Super+R | Cycle width 1/3, 1/2, 2/3 |
-| Super+F / Super+Shift+F | Maximize / fullscreen |
+| Super+Shift+H/J/K/L | Focus other monitor |
+| Super+R | Width 1/3, 1/2, 2/3 |
 | Super+- / Super+= | Narrower / wider |
-| Super+W | Tabbed column |
-| Super+Shift+V | Float window |
+| Super+F / Super+Shift+F / Super+M | Full width / fullscreen / maximize to edges |
+| Super+V | Float window |
+| Super+W | Tabs in this column |
+| Super+[ / Super+] | Move window into / out of a column |
+| Super+Alt+Space | Cycle layout: scrolling, dwindle, master, stacking |
+| Super+\` / Super+Shift+\` | Scratchpad: show / park a window |
 | Super+1..9 | Go to workspace |
-| Super+Shift+1..9 | Send window to workspace |
+| Super+Ctrl+1..9 / Super+Shift+1..9 | Send column / window to workspace |
 | Super+U / Super+I | Workspace down / up |
-| Super+O | Overview |
-| Print or Super+Shift+S | Screenshot an area |
+| Super+Escape | Let a VM or game grab all keys (press again to undo) |
 | Super+Shift+E | Log out |
 
-## Terminal tools worth knowing
+## Terminal tools
 
 | Type | What it does |
 |---|---|
-| `, cowsay hi` | run any program without installing it (comma) |
-| Ctrl+R | search your whole command history (atuin) |
-| `tldr tar` | short examples for a command |
-| `lazygit` | git in a friendly screen |
-| `git diff` | side-by-side, coloured (delta) |
-| `bat file` | `cat` with colours |
-| `thinkpad` | temperatures, fan and LED as JSON |
-| `battery-charge-mode` | charging mode from the terminal |
-| `upgrade` | newest versions of everything, then apply |
+| `battery-mode` (`bm`) | charging mode: `bm drain`, `bm docked`, `bm json` |
+| `thinkpad` | temperatures, fan, LED as JSON; `thinkpad fan charger` |
+| `, cowsay hi` | run any program without installing it |
+| Ctrl+R / Ctrl+T / Ctrl+G | history (atuin) / files (fzf) / cheat sheets (navi) |
+| `z proj` | jump to a folder you've visited |
+| `y` | yazi; the shell follows to where you quit |
+| `tldr tar`, `lazygit`, `bat file` | examples, git TUI, coloured cat |
 
 Unknown command? The terminal tells you which package has it.
 
 ## How to change things
 
-Edit the file, `git add .` if you made a new file, then `rebuild`. niri
-reloads its config by itself when the file changes.
+Edit, `git add` new files, `rebuild`. Umbriel and Noctalia reload by themselves.
 
-| I want to change... | File | What to edit |
-|---|---|---|
-| Gaps between windows | `home/niri/kdl/look.kdl` | `gaps 10` |
-| Focus ring colours | `home/niri/kdl/look.kdl` | `active-gradient from=... to=...` |
-| Animation speed | `home/niri/kdl/animations.kdl` | `slowdown 1.0` (bigger = slower) |
-| Screen size / refresh rate | Display panel | Super+P, tap a button (remembered) |
-| Which screens are on when | `home/kanshi.nix` | the profiles |
-| Charging modes and their % | `modules/battery.nix` | the `modes` list |
-| Fan / lid LED | ThinkPad panel | Super+Shift+T (remembered) |
-| Auto-lock / sleep times | `home/noctalia/default.nix` | `idle.behavior` |
-| Location (night light, weather) | `home/noctalia/default.nix` | `location` |
-| Voice typing model, sounds | `home/voice.nix` | `settings` |
-| Webcam brightness, exposure... | "Camera Settings" app | change, then close it (saved) |
-| Turn on backups | `modules/backup.nix` | follow the 2 steps at the top |
-| Add Georgian keyboard | `home/niri/kdl/input.kdl` | follow the comment there |
-| A shortcut | `home/niri/kdl/binds.kdl` | copy a line, change keys and action |
-| Terminal font or theme | `home/ghostty.nix` | `font-size`, `theme` |
-| Prompt colours | `home/starship.nix` | the `style` values |
-| Login screen | `modules/niri.nix` | the `services.greetd` block |
-| Bar layout, theme, wallpaper | `home/noctalia/default.nix` | the `settings` block |
+| I want to change... | File |
+|---|---|
+| A shortcut | `home/umbriel/binds.nix` |
+| Gaps, borders, blur, layout | `home/umbriel/look.nix` |
+| Keyboard layouts / switch key, touchpad | `home/umbriel/input.nix` |
+| Window rules | `home/umbriel/rules.nix` |
+| Bar, theme, idle/lock times, location | `home/noctalia/default.nix` |
+| Which screens are on when | `home/kanshi.nix` |
+| Screen size / refresh rate | Display panel (Super+Shift+D), remembered |
+| Charging modes and their % | `modules/battery.nix` (`modes`) |
+| Apps | `home/apps.nix`, CLI tools `home/packages.nix` |
+| Turn on backups | `modules/backup.nix` (2 steps at the top) |
 
-To add a new `.kdl` piece: create it in `home/niri/kdl/`, add it to the
-`pieces` list in `home/niri/default.nix`, then `git add` it.
+Anything you click in Noctalia's Settings is saved to
+`~/.local/state/noctalia/settings.toml` and wins over the Nix settings.
+Delete that file to go back to exactly what Nix says.
 
 ## If something breaks
 
-**Rebuild fails with a `.kdl` error:** that's the safety check working. Read
-the line number and fix the typo.
-
-**Rebuild fails with a strange `niri validate` error that isn't about your
-config:** in `home/niri/default.nix`, change `.source = checked;` to
-`.source = joined;` to skip the check.
-
-**A Noctalia shortcut does nothing:** run `noctalia msg --help` in a
-terminal to list the commands it accepts, then fix the words in `binds.kdl`.
-
-**No bar appears, or a widget is missing:** read the log,
-`~/.cache/noctalia/noctalia.log` (look for `[ERR]`), or run `noctalia` in a
-terminal (Super+Enter still works).
-
-**The laptop screen came back on while docked:** run
-`systemctl --user restart kanshi`. Screen settings you picked are in
-`~/.config/kanshi/display.conf`; delete it and rebuild to reset them.
-
-**A charging mode button does nothing:** try it in a terminal,
-`battery-charge-mode travel`, and read the error.
-
-**VS Code says "OS keyring couldn't be identified":** add
-`"password-store": "gnome-libsecret"` to `~/.vscode/argv.json` and restart
-it. Logins are stored in GNOME Keyring, which unlocks when you log in.
-
-**No login screen / black screen:** press Ctrl+Alt+F2, log in as text, and run
-`sudo nixos-rebuild switch --rollback`. Or restart and pick the previous
-entry in the boot menu.
+- **Rebuild stops with an Umbriel or Noctalia config error:** that's the
+  check working. Read the message, fix that line.
+- **No bar:** `journalctl --user -b | grep -i noctalia`, or run `noctalia`
+  in a terminal. Umbriel's own log: `~/.cache/umbriel/umbriel.log`.
+- **Laptop screen came back on while docked:** `systemctl --user restart kanshi`.
+  Your screen choices are in `~/.config/kanshi/display.conf`; delete it and
+  rebuild to reset.
+- **A charging mode does nothing:** run `battery-mode drain` in a terminal and read the error.
+- **Black screen / no login screen:** Ctrl+Alt+F2, log in as text, run
+  `sudo nixos-rebuild switch --rollback`. Or reboot into the previous boot entry.
+- **Want an older Umbriel:** `git log flake.lock`, check out the previous
+  lock, `rebuild`.

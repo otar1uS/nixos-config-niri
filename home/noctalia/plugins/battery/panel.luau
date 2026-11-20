@@ -1,14 +1,14 @@
 --!nonstrict
 -- ═══════════════════════════════════════════════════════════════════════════
---  Battery: the pop-up panel (click the battery in the bar, or Super+Shift+B)
+--  Battery: the pop-up panel (click the battery in the bar, or Super+B)
 -- ═══════════════════════════════════════════════════════════════════════════
 --  ┌──────────────────────────────────────┐
 --  │ [icon]  Not charging                 │
---  │  48%    Charging mode: Desk 35→40%   │
+--  │  48%    Charging mode: Docked        │
 --  │         Health 95% · 17 cycles       │
 --  │ CHARGING MODE                        │
---  │ [Desk] [Daily] [Travel]              │
---  │ Plugged in all day. Kindest to ...   │
+--  │ [Docked][Drain][Pause][Balanced][Full]│
+--  │ Holds 35-40%. Best for battery ...   │
 --  │ POWER MODE                           │
 --  │ [Saver] [Balanced] [Performance]     │
 --  └──────────────────────────────────────┘
@@ -83,13 +83,14 @@ local function render()
   }
 
   -- Charging modes: one button per mode from modules/battery.nix.
+  -- (Pause has no limits of its own, so the text comes from each mode's hint.)
   if snap.hasModes and #snap.modes > 0 then
     table.insert(sections, heading("CHARGING MODE"))
     local buttons, hint = {}, "Custom limits: pick a mode to reset them."
     for _, mode in ipairs(snap.modes) do
       local isActive = mode.id == active
       if isActive then
-        hint = mode.hint .. string.format(" (%d→%d%%)", mode.start, mode.stop)
+        hint = mode.hint
         if snap.pendingMode ~= "" then
           hint = "Switching…"
         end
@@ -100,7 +101,7 @@ local function render()
         glyph = mode.glyph,
         variant = isActive and "primary" or "outline",
         flexGrow = 1,
-        tooltip = string.format("Charge when below %d%%, stop at %d%%", mode.start, mode.stop),
+        tooltip = mode.hint,
         onClick = function()
           send("set_mode", mode.id)
         end,

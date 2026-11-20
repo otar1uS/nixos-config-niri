@@ -8,9 +8,9 @@ license     = "MIT"
 icon        = "device-desktop"
 description = "One-tap screen size (scale) and refresh rate per monitor, remembered by kanshi."
 
-# Programs this plugin runs: niri (to read/change screens) and kanshictl
+# Programs this plugin runs: wlr-randr (to read/change screens) and kanshictl
 # (to tell kanshi to re-read ~/.config/kanshi/display.conf).
-dependencies = ["niri", "kanshictl"]
+dependencies = ["wlr-randr", "kanshictl"]
 
 # The background part: knows your screens, saves your choices.
 [[service]]
@@ -22,7 +22,7 @@ entry = "service.luau"
 id    = "widget"
 entry = "widget.luau"
 
-# The pop-up (click the bar part, or Super+P).
+# The pop-up (click the bar part, or Super+Shift+D).
 [[panel]]
 id              = "panel"
 entry           = "panel.luau"

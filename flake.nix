@@ -1,60 +1,77 @@
 {
-  description = "My NixOS config";
+  description = "otari's NixOS: ThinkPad T14s Gen 3 AMD with Umbriel + Noctalia";
 
   inputs = {
-    # Two "channels" (snapshots of all NixOS packages):
-    #   stable   = tested, changes slowly. The base of the system and your apps.
-    #   unstable = newest versions. Used for the desktop (see modules/unstable.nix).
-    # Update both with:  upgrade   (an alias in home.nix)
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    herdr.url = "github:herdrdev/herdr";
+    # One channel for everything: nixos-unstable, the newest packages that
+    # passed NixOS's own tests. Umbriel, Noctalia and the greeter are all in it
+    # and come prebuilt from cache.nixos.org. Update with `upgrade` (fish).
+    # The channels.nixos.org tarball is the same commit as the GitHub branch,
+    # but a much smaller download.
+    nixpkgs.url = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz";
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-26.05";
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # A ready-made, weekly-updated index of which package contains which
-    # program. Powers `comma` (run any program without installing it:
-    # `, cowsay hi`) and "command not found" hints in the terminal.
+    # Declarative disk layout (LUKS + btrfs), used once by the installer.
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Known-good hardware settings (ThinkPad, AMD CPU/GPU, SSD).
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
+
+    # Weekly prebuilt "which package has this command" index: powers `,` (comma)
+    # and the "command not found" hints.
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    # (niri needs no extra input: it already lives in nixpkgs.)
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, home-manager, nix-index-database, ... }:
+  outputs =
+    {
+      nixpkgs,
+      home-manager,
+      disko,
+      nixos-hardware,
+      nix-index-database,
+      ...
+    }:
     let
-      system = "x86_64-linux";
-
-      # The unstable package set, made ONCE here and shared with every file
-      # below (the system files AND home.nix), so they all use the same one.
-      pkgs-unstable = import nixpkgs-unstable {
-        inherit system;
-        config.allowUnfree = true; # separate package set, so it needs its own unfree switch
-      };
+      # Where this repo is cloned. nh, the nvim link and the docs use it.
+      flakeDir = "/home/otari/nixos-config";
     in
     {
       nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
-        # Lets system files (configuration.nix, modules/*.nix) ask for
-        # `pkgs-unstable` in their first line, just like home.nix does.
-        specialArgs = { inherit pkgs-unstable; };
-
+        specialArgs = { inherit flakeDir; };
         modules = [
           ./configuration.nix
-          nix-index-database.nixosModules.default # adds the options used in configuration.nix (comma)
+          disko.nixosModules.disko
+          nix-index-database.nixosModules.default
+
+          # The T14s profile (TrackPoint, backlight) plus AMD pieces. There is
+          # no dedicated "gen3 AMD" profile, so these are the parts that apply.
+          nixos-hardware.nixosModules.lenovo-thinkpad-t14s
+          nixos-hardware.nixosModules.common-cpu-amd-pstate
+          nixos-hardware.nixosModules.common-gpu-amd
+          nixos-hardware.nixosModules.common-pc-ssd
+
           home-manager.nixosModules.home-manager
           {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.backupFileExtension = "backup";
-            home-manager.extraSpecialArgs = { inherit pkgs-unstable; }; # the same set as above
-            home-manager.users.otari = import ./home.nix;
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              backupFileExtension = "hm-backup";
+              extraSpecialArgs = { inherit flakeDir; };
+              users.otari = ./home.nix;
+            };
           }
         ];
       };
+
+      formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
     };
 }

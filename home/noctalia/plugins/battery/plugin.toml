@@ -7,10 +7,10 @@ plugin_api  = 24 # needs Noctalia's plugin API level 24+ (button callbacks, safe
 author      = "otari"
 license     = "GPL-3.0" # based on piero-93/battery-power-management (GPL-3.0)
 icon        = "battery-charging"
-description = "Battery widget with charging modes (Desk / Daily / Travel), power modes, health and time left."
+description = "Battery widget with charging modes (Docked / Drain / Pause / Balanced / Full), power modes, health and time left."
 
-# Programs this plugin runs. battery-charge-mode comes from modules/battery.nix.
-dependencies = ["battery-charge-mode", "powerprofilesctl", "upower"]
+# Programs this plugin runs. battery-mode comes from modules/battery.nix.
+dependencies = ["battery-mode", "powerprofilesctl", "upower"]
 
 # The background part: reads the battery every few seconds.
 [[service]]
@@ -26,7 +26,7 @@ entry = "widget.luau"
 [[panel]]
 id              = "panel"
 entry           = "panel.luau"
-width           = 430
+width           = 540 # five mode buttons in one row
 height          = 330
 placement       = "attached" # hangs from the bar
 position        = "auto"

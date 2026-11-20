@@ -45,6 +45,8 @@ in
       "/home/otari/.local/share/Trash"
       "/home/otari/.local/state/nix" # Nix profiles: rebuilt from this config
       "/home/otari/.npm"
+      "/home/otari/.bun/install/cache"
+      "/home/otari/.local/share/pnpm/store"
       "/home/otari/.cargo/registry"
       "/home/otari/.rustup"
       "/home/otari/go/pkg/mod"
@@ -54,6 +56,9 @@ in
       ".direnv" # per-project Nix environments
       "target" # Rust build output
       "result" # Nix build links
+      "/home/otari/code/*/Library" # Unity's rebuildable caches (often several GB)
+      "/home/otari/code/*/Temp"
+      "/home/otari/code/*/Logs"
     ];
 
     timerConfig = {

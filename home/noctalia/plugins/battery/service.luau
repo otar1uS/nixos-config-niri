@@ -8,7 +8,7 @@
 --
 --  Based on piero-93/battery-power-management (GPL-3.0). Changed: the
 --  charge-limit slider is replaced by charging MODES that set both the
---  start and stop numbers through `battery-charge-mode` (modules/battery.nix),
+--  start and stop numbers through `battery-mode` (modules/battery.nix),
 --  and battery health / charge cycles were added.
 --  (In Luau, a line starting with -- is a comment.)
 
@@ -23,7 +23,7 @@ local BATTERY = "/sys/class/power_supply/BAT0"
 -- Which helper programs are installed?
 local HAS_PPD = noctalia.commandExists("powerprofilesctl")
 local HAS_UPOWER = noctalia.commandExists("upower")
-local HAS_MODES = noctalia.commandExists("battery-charge-mode")
+local HAS_MODES = noctalia.commandExists("battery-mode")
 
 local snapshot = {
   percent = 0,
@@ -34,7 +34,7 @@ local snapshot = {
   cycles = 0, -- how many full charge cycles the battery has done
   profile = "balanced", -- power mode: power-saver / balanced / performance
   hasProfile = HAS_PPD,
-  mode = "", -- charging mode id: desk / daily / travel / custom
+  mode = "", -- charging mode id: docked / drain / pause / balanced / full / custom
   start = 0, -- charging starts below this %
   stop = 100, -- charging stops at this %
   modes = {}, -- every mode from modules/battery.nix
@@ -113,13 +113,13 @@ local function readBattery()
   end
 end
 
--- `battery-charge-mode json` prints the current mode and the full mode list.
+-- `battery-mode json` prints the current mode and the full mode list.
 local function readModes()
   if not HAS_MODES or busy.modes then
     return
   end
   busy.modes = true
-  local launched = noctalia.runAsync({ "battery-charge-mode", "json" }, function(res)
+  local launched = noctalia.runAsync({ "battery-mode", "json" }, function(res)
     busy.modes = false
     local data = res.exitCode == 0 and noctalia.json.decode(res.stdout or "")
     if type(data) == "table" then
@@ -205,11 +205,11 @@ noctalia.state.watch(COMMAND, function(cmd)
     end
     snapshot.pendingMode = mode.id
     publish()
-    noctalia.runAsync({ "battery-charge-mode", mode.id }, function(res)
+    noctalia.runAsync({ "battery-mode", mode.id }, function(res)
       if res.exitCode == 0 then
         noctalia.notify(
           mode.name .. " charging mode",
-          string.format("Charges when below %d%%, stops at %d%%.", mode.start, mode.stop)
+          mode.hint
         )
       else
         snapshot.pendingMode = ""

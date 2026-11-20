@@ -2,12 +2,14 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 --  Display: the background service (no screen of its own).
 -- ═══════════════════════════════════════════════════════════════════════════
---  • Asks niri which screens exist (`niri msg --json outputs`) whenever a
---    screen changes, and shares a "snapshot" with the widget and the panel.
+--  • Asks which screens exist (`wlr-randr --json`, works on Umbriel and any
+--    other compositor with the standard output-management protocol)
+--    whenever a screen changes, and shares a "snapshot" with the widget and
+--    the panel.
 --  • Works out sensible SIZE choices for each screen from its pixel density.
---  • When you tap a button: changes the screen right away (niri), saves the
---    choice in ~/.config/kanshi/display.conf, and tells kanshi to re-read it,
---    so the choice is remembered next time you log in or plug the screen in.
+--  • When you tap a button: changes the screen right away (wlr-randr), saves
+--    the choice in ~/.config/kanshi/display.conf, and tells kanshi to re-read
+--    it, so the choice is remembered next time you log in or plug it in.
 
 local SNAPSHOT = "display.snapshot"
 local COMMAND = "display.command"
@@ -51,7 +53,7 @@ end
 
 local function writeSaved()
   local lines = {
-    "# Screen settings, written by the Display panel in the bar (Super+P).",
+    "# Screen settings, written by the Display panel in the bar (Super+Shift+D).",
     '# One line per screen: output "<name>" [mode WIDTHxHEIGHT@HZ] [scale N]',
     "# Delete this file and rebuild to get the defaults back.",
   }
@@ -92,25 +94,36 @@ local function fmtScale(x)
   return (string.format("%.2f", x):gsub("0+$", ""):gsub("%.$", ""))
 end
 
--- ── Reading the screens from niri ──────────────────────────────────────
-local function buildOutput(port, o)
+-- ── Reading the screens (wlr-randr --json) ────────────────────────────
+-- One entry per screen: name ("eDP-1"), make/model/serial, physical_size in
+-- mm, enabled, scale, and modes { width, height, refresh (Hz), current }.
+local function buildOutput(o)
+  local port = o.name or "?"
   local isLaptop = port:match("^eDP") ~= nil
-  local mode = o.current_mode and o.modes[o.current_mode + 1] -- Luau lists start at 1
-  local width = mode and mode.width or (o.modes[1] and o.modes[1].width) or 0
-  local height = mode and mode.height or (o.modes[1] and o.modes[1].height) or 0
-  local wmm, hmm = (o.physical_size or {})[1] or 0, (o.physical_size or {})[2] or 0
+  local modes = o.modes or {}
+  local mode = nil
+  for _, m in ipairs(modes) do
+    if m.current then
+      mode = m
+    end
+  end
+  local width = mode and mode.width or (modes[1] and modes[1].width) or 0
+  local height = mode and mode.height or (modes[1] and modes[1].height) or 0
+  local wmm = (o.physical_size or {}).width or 0
+  local hmm = (o.physical_size or {}).height or 0
   local ppi = wmm > 0 and width / (wmm / 25.4) or 96
   local inches = math.sqrt(wmm * wmm + hmm * hmm) / 25.4
   local choices, recommended = sizeChoices(ppi, isLaptop)
 
-  -- Refresh rates available at the current resolution, e.g. 60 / 100 / 120 Hz.
-  -- niri counts in millihertz (120000 = 120 Hz). Keep the best of each.
+  -- Refresh rates at the current resolution, e.g. 60 / 100 / 120 Hz. Kept in
+  -- millihertz (119990 = 119.990 Hz), the exact unit wlr-randr matches on.
   local rates, seen = {}, {}
-  for _, m in ipairs(o.modes or {}) do
+  for _, m in ipairs(modes) do
     if m.width == width and m.height == height then
-      local hz = math.floor(m.refresh_rate / 1000 + 0.5)
-      if not seen[hz] or m.refresh_rate > seen[hz] then
-        seen[hz] = m.refresh_rate
+      local mhz = math.floor((m.refresh or 0) * 1000 + 0.5)
+      local hz = math.floor(mhz / 1000 + 0.5)
+      if not seen[hz] or mhz > seen[hz] then
+        seen[hz] = mhz
       end
     end
   end
@@ -128,11 +141,11 @@ local function buildOutput(port, o)
     title = isLaptop and "Laptop screen" or (o.model or port),
     maker = isLaptop and "Built-in" or (o.make or ""),
     isLaptop = isLaptop,
-    enabled = o.logical ~= nil, -- niri gives no "logical" size for a screen that is off
+    enabled = o.enabled == true,
     width = width,
     height = height,
-    refresh = mode and mode.refresh_rate or 0,
-    scale = o.logical and o.logical.scale or 1,
+    refresh = mode and math.floor((mode.refresh or 0) * 1000 + 0.5) or 0,
+    scale = o.scale or 1,
     inches = math.floor(inches + 0.5),
     ppi = math.floor(ppi + 0.5),
     choices = choices,
@@ -148,17 +161,17 @@ local function refresh()
   end
   reading = true
   readSaved()
-  local launched = noctalia.runAsync({ "niri", "msg", "--json", "outputs" }, function(res)
+  local launched = noctalia.runAsync({ "wlr-randr", "--json" }, function(res)
     reading = false
     local data = res.exitCode == 0 and noctalia.json.decode(res.stdout or "")
     if type(data) ~= "table" then
-      snapshot.error = "Could not ask niri about the screens."
+      snapshot.error = "Could not read the screens (wlr-randr --json failed)."
       noctalia.state.set(SNAPSHOT, table.clone(snapshot))
       return
     end
     local list = {}
-    for port, o in pairs(data) do
-      table.insert(list, buildOutput(port, o))
+    for _, o in ipairs(data) do
+      table.insert(list, buildOutput(o))
     end
     -- Screens that are on first, then by name.
     table.sort(list, function(a, b)
@@ -194,15 +207,15 @@ local function countEnabled()
   return n
 end
 
--- Run `niri msg output <port> ...`, then re-read the screens.
-local function niriOutput(args)
-  local argv = { "niri", "msg", "output" }
+-- Run `wlr-randr --output <port> ...`, then re-read the screens.
+local function applyNow(port, args)
+  local argv = { "wlr-randr", "--output", port }
   for _, a in ipairs(args) do
     table.insert(argv, a)
   end
   noctalia.runAsync(argv, function(res)
     if res.exitCode ~= 0 then
-      noctalia.notifyError("Display", "niri said: " .. (res.stderr or res.stdout or "error"))
+      noctalia.notifyError("Display", "Could not change the screen: " .. (res.stderr or res.stdout or "error"))
     end
     refresh()
   end, TIMEOUT_MS)
@@ -233,12 +246,12 @@ noctalia.state.watch(COMMAND, function(cmd)
 
   if cmd.action == "set_scale" then
     local s = fmtScale(tonumber(cmd.value) or 1)
-    niriOutput({ o.port, "scale", s }) -- change it now
+    applyNow(o.port, { "--scale", s }) -- change it now
     remember(o, "scale", s) -- and remember it
   elseif cmd.action == "set_rate" then
     local mhz = tonumber(cmd.value) or 0
     local mode = string.format("%dx%d@%.3f", o.width, o.height, mhz / 1000)
-    niriOutput({ o.port, "mode", mode })
+    applyNow(o.port, { "--mode", mode })
     remember(o, "mode", mode .. "Hz")
   elseif cmd.action == "set_power" then
     -- Never switch off the last screen that is on: you'd see nothing.
@@ -247,7 +260,7 @@ noctalia.state.watch(COMMAND, function(cmd)
       return
     end
     -- Not remembered on purpose: kanshi decides again on the next plug-in.
-    niriOutput({ o.port, cmd.value and "on" or "off" })
+    applyNow(o.port, { cmd.value and "--on" or "--off" })
   end
 end)
 

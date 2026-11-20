@@ -1,6 +1,6 @@
 --!nonstrict
 -- ═══════════════════════════════════════════════════════════════════════════
---  Display: the pop-up panel (click the monitor in the bar, or Super+P)
+--  Display: the pop-up panel (click the monitor in the bar, or Super+Shift+D)
 -- ═══════════════════════════════════════════════════════════════════════════
 --  One card per screen:
 --  ┌────────────────────────────────────────────┐
@@ -30,7 +30,7 @@ local function fmtScale(x)
   return (string.format("%.2f", x):gsub("0+$", ""):gsub("%.$", "")) .. "×"
 end
 
--- Two scales count as "the same" if they're within 0.01 (niri rounds a bit).
+-- Two scales count as "the same" if they're within 0.01 (compositors round a bit).
 local function same(a, b)
   return math.abs(a - b) < 0.01
 end

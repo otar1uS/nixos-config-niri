@@ -6,14 +6,15 @@
 #  connected, and when that changes it picks the first "profile" below
 #  that fits EXACTLY (same number of screens) and applies it.
 #
-#  kanshi is the ONLY thing that sets up screens. niri's own config has no
-#  screen settings on purpose, so the two can never fight.
+#  kanshi is the ONLY thing that sets up screens. Umbriel's config has no
+#  [output] sections on purpose, so the two can never fight. (Umbriel speaks
+#  the standard wlr-output-management protocol that kanshi uses.)
 #
 #  Two files:
 #   • This file (from Nix, read-only): the profiles, i.e. WHICH screens are
 #     on. Laptop alone = laptop on. Laptop + monitor = laptop off.
 #   • ~/.config/kanshi/display.conf (yours, writable): each screen's size
-#     (scale) and refresh rate. The Display panel in the bar (Super+P)
+#     (scale) and refresh rate. The Display panel in the bar (Super+Shift+D)
 #     rewrites it when you tap a button. It's created below with good
 #     defaults the first time, and a rebuild never overwrites it.
 
@@ -24,23 +25,23 @@ let
   displayFile = "${config.xdg.configHome}/kanshi/display.conf";
 
   # Your screens, by the names kanshi knows them by. A monitor is named
-  # "maker model serial" (see `niri msg outputs`), so it is recognised on
+  # "maker model serial" (see `wlr-randr` or `umbriel outputs`), so it is recognised on
   # any port. The laptop screen is simply "eDP-1".
   laptop = "eDP-1";
   dell = "Dell Inc. DELL S3425DW 3XFTR44";
 
   # The first version of display.conf. After that, the Display panel owns it.
   defaultDisplayConf = pkgs.writeText "display.conf" ''
-    # Screen settings, written by the Display panel in the bar (Super+P).
+    # Screen settings, written by the Display panel in the bar (Super+Shift+D).
     # One line per screen: output "<name>" [mode WIDTHxHEIGHT@HZ] [scale N]
     # Delete this file and rebuild to get the defaults back.
     output "${laptop}" scale 1.25
-    output "${dell}" mode 3440x1440@120.000Hz scale 1
+    output "${dell}" mode 3440x1440@120.000Hz scale 1.333333
   '';
 in
 {
   services.kanshi = {
-    enable = true; # starts kanshi automatically every time you log in to niri
+    enable = true; # starts with the Umbriel session (graphical-session.target)
 
     settings = [
       # Read the per-screen settings first, so the profiles below use them.

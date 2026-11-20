@@ -1,6 +1,6 @@
 --!nonstrict
 -- ═══════════════════════════════════════════════════════════════════════════
---  Battery: the part in the bar.  [battery icon] 48%  (+ a plane in Travel)
+--  Battery: the part in the bar.  [battery icon] 48%  (+ the mode icon in Full/Drain/Pause)
 -- ═══════════════════════════════════════════════════════════════════════════
 --  It only DRAWS what the service shares; it never reads the battery itself.
 --  Click it to open the panel. Hover it for details.
@@ -57,7 +57,7 @@ local function tooltip()
   end
   local mode = currentMode()
   if mode then
-    table.insert(rows, { key = "Charging mode", value = string.format("%s (%d→%d%%)", mode.name, mode.start, mode.stop) })
+    table.insert(rows, { key = "Charging mode", value = mode.name })
   end
   if (snap.health or 0) > 0 then
     table.insert(rows, { key = "Health", value = string.format("%d%% · %d cycles", snap.health, snap.cycles or 0) })
@@ -71,9 +71,10 @@ local function render()
   if not barWidget.isVertical() then
     table.insert(children, ui.label({ text = (snap.percent or 0) .. "%", fontWeight = "bold", color = c }))
   end
-  -- In Travel mode, show the mode icon too, as a reminder to switch back.
+  -- In the temporary modes (Full, Drain, Pause), show the mode icon too, as a
+  -- reminder to switch back.
   local mode = currentMode()
-  if mode and mode.id == "travel" then
+  if mode and (mode.id == "full" or mode.id == "drain" or mode.id == "pause") then
     table.insert(children, ui.glyph({ name = mode.glyph, color = "primary" }))
   end
   local container = barWidget.isVertical() and ui.column or ui.row
