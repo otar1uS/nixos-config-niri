@@ -11,21 +11,15 @@
 #  Ctrl+R history (atuin), Ctrl+T files (fzf), Ctrl+G cheat sheets (navi),
 #  `z <part of a folder name>` jumps there (zoxide).
 
-{ lib, ... }:
+{ ... }:
 
 {
   programs.fish = {
     enable = true;
 
-    interactiveShellInit = lib.mkMerge [
-      ''
-        set -g fish_greeting # no "Welcome to fish"
-      ''
-      # Both fzf and atuin want Ctrl+R; atuin's searchable history wins.
-      (lib.mkAfter ''
-        bind ctrl-r _atuin_search
-      '')
-    ];
+    interactiveShellInit = ''
+      set -g fish_greeting # no "Welcome to fish"
+    '';
 
     shellAbbrs = {
       rebuild = "nh os switch";
@@ -58,7 +52,10 @@
   };
 
   programs.zoxide.enable = true; # `z proj` -> ~/code/project
-  programs.fzf.enable = true; # Ctrl+T: pick a file
+  programs.fzf = {
+    enable = true; # Ctrl+T: pick a file
+    historyWidget.command = ""; # Ctrl+R belongs to atuin (home/dev.nix)
+  };
   programs.navi.enable = true; # Ctrl+G: cheat sheets, the pick lands on your prompt
   programs.eza = {
     enable = true; # ls, ll, la, lt with colours and git status

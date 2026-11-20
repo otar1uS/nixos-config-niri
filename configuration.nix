@@ -42,14 +42,10 @@
       efi.canTouchEfiVariables = true;
     };
 
-    # systemd in the initrd: a modern early boot, and it makes Plymouth's
-    # graphical LUKS password prompt work.
-    initrd.systemd.enable = true;
-
     # Graphical boot splash with the disk password box, no scrolling text.
+    # (The early boot is systemd-based; on nixos-unstable that's the only kind.)
     plymouth.enable = true;
     consoleLogLevel = 3;
-    initrd.verbose = false;
     kernelParams = [
       "quiet"
       "splash"
@@ -177,7 +173,7 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    jack.enable = true;
+    # JACK apps: run them through `pw-jack <app>` (the global switch is deprecated).
 
     # PipeWire also handles cameras. Two fixes so camera apps (Camera,
     # Brave, Discord...) list each real webcam once:

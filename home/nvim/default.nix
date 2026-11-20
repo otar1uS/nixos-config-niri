@@ -19,8 +19,7 @@
 }:
 
 {
-  xdg.configFile."nvim".source =
-    config.lib.file.mkOutOfStoreSymlink "${flakeDir}/home/nvim/config";
+  xdg.configFile."nvim".source = config.lib.file.mkOutOfStoreSymlink "${flakeDir}/home/nvim/config";
 
   # What LazyVim expects to find on PATH.
   home.packages = with pkgs; [

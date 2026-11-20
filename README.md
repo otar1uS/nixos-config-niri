@@ -46,16 +46,28 @@ for d in ~/code/*/; do (cd "$d" 2>/dev/null && git rev-parse 2>/dev/null &&
   echo "UNPUSHED: $d"); done
 
 rsync -aHAX --info=progress2 \
-  ~/code ~/Documents ~/Pictures ~/Videos ~/Music ~/Downloads ~/Backups ~/keyring-backup \
-  ~/.ssh ~/.gnupg ~/.claude ~/.claude.json ~/.gemini ~/.bootdev.yaml \
-  ~/.local/share/keyrings ~/.local/share/fish/fish_history \
+  ~/code ~/Documents ~/Pictures ~/Videos ~/Music ~/Downloads ~/Backups \
+  ~/.claude ~/.claude.json ~/.gemini ~/.bootdev.yaml \
+  ~/.local/share/fish/fish_history \
   ~/.config/BraveSoftware ~/.mozilla \
   ~/.var/app/com.vscodium.codium/config/VSCodium ~/.vscode-oss \
   "$B"/
+
+# Secrets go ENCRYPTED (asks for a passphrase; keep it in a password manager)
+tar -C ~ -czf - .ssh .local/share/keyrings keyring-backup |
+  gpg --symmetric --cipher-algo AES256 -o "$B/secrets.tar.gz.gpg"
+gpg -d "$B/secrets.tar.gz.gpg" | tar -tzf -   # check: lists file names only
 ```
 
-- `~/.ssh` and `~/.local/share/keyrings` are **secrets**: keep that drive safe
-  (or encrypt it).
+Restore the secrets on NixOS with:
+
+```sh
+gpg -d /run/media/otari/DRIVE/fedora-backup/secrets.tar.gz.gpg | tar -C ~ -xzf -
+chmod 700 ~/.ssh && chmod 600 ~/.ssh/* && chmod 644 ~/.ssh/*.pub
+```
+
+- `.claude.json` and `.gemini` hold login tokens too: re-logging in
+  (`claude`, `gemini`) is the alternative to copying them.
 - Brave: turning on **Brave Sync** is an easier way to keep tabs and passwords.
 - `~/code/*/node_modules` and Unity `Library/` folders are rebuildable; add
   `--exclude node_modules --exclude Library` to skip them.

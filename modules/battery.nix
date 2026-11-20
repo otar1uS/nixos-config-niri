@@ -98,7 +98,9 @@ let
   modeCase =
     m:
     let
-      limits = lib.optionalString (m.start != null) "set_thresholds ${toString m.start} ${toString m.stop}";
+      limits = lib.optionalString (
+        m.start != null
+      ) "set_thresholds ${toString m.start} ${toString m.stop}";
       drain = ''
         if [ "$(cat "$BAT/capacity")" -le ${toString m.drainTo} ]; then
           echo ${m.after} > "$STATE"

@@ -21,6 +21,7 @@
 
   # The same cursor for X11 apps and anything that reads XCURSOR_*.
   home.pointerCursor = {
+    enable = true;
     package = pkgs.adwaita-icon-theme;
     name = "Adwaita";
     size = 24;

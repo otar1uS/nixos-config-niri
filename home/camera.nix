@@ -60,7 +60,11 @@ in
     comment = "Brightness, exposure, colours... (saved when you close it)";
     exec = "camera-settings";
     icon = "hu.irl.cameractrls";
-    categories = [ "Settings" "AudioVideo" "Video" ];
+    categories = [
+      "Settings"
+      "AudioVideo"
+      "Video"
+    ];
     settings.Keywords = "camera;webcam;brightness;exposure;cameractrls;";
   };
 

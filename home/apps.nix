@@ -20,7 +20,7 @@
     # ── work ──
     vscodium
     obsidian
-    libreoffice-fresh # newest LibreOffice
+    libreoffice # newest LibreOffice
     unityhub # your Unity 6 projects in ~/code (Star-Blaster, Snow-Surfr...)
 
     # ── media ──

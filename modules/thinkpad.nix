@@ -23,11 +23,24 @@
 #    thinkpad fan charger  pick a fan mode   (auto / charger / max)
 #    thinkpad led charging pick an LED mode  (off / on / charging)
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
-  fanModes = [ "auto" "charger" "max" ];
-  ledModes = [ "off" "on" "charging" ];
+  fanModes = [
+    "auto"
+    "charger"
+    "max"
+  ];
+  ledModes = [
+    "off"
+    "on"
+    "charging"
+  ];
 
   fanFile = "/proc/acpi/ibm/fan"; # the fan's control file (from the thinkpad_acpi driver)
   ledDir = "/sys/class/leds/tpacpi::lid_logo_dot";
@@ -72,13 +85,22 @@ let
   };
 
   jobs =
-    map (m: { name = "thinkpad-fan-${m}"; value = makeJob "fan" m; }) fanModes
-    ++ map (m: { name = "thinkpad-led-${m}"; value = makeJob "led" m; }) ledModes;
+    map (m: {
+      name = "thinkpad-fan-${m}";
+      value = makeJob "fan" m;
+    }) fanModes
+    ++ map (m: {
+      name = "thinkpad-led-${m}";
+      value = makeJob "led" m;
+    }) ledModes;
 
   # ── The command (runs as you, no admin needed for reading) ────────────
   thinkpadCmd = pkgs.writeShellApplication {
     name = "thinkpad";
-    runtimeInputs = [ config.systemd.package pkgs.jq ];
+    runtimeInputs = [
+      config.systemd.package
+      pkgs.jq
+    ];
     text = ''
       # Temperature of the first sensor called NAME, in °C ("null" if none).
       # Linux numbers the sensors (hwmon0, hwmon1...) differently on each
@@ -149,7 +171,10 @@ in
     # (the laptop forgets fan and LED settings when it sleeps).
     thinkpad-apply = {
       description = "ThinkPad: restore fan and LED modes";
-      wantedBy = [ "multi-user.target" "post-resume.target" ];
+      wantedBy = [
+        "multi-user.target"
+        "post-resume.target"
+      ];
       after = [ "post-resume.target" ];
       serviceConfig = {
         Type = "oneshot";

@@ -21,7 +21,10 @@
     };
 
     # Known-good hardware settings (ThinkPad, AMD CPU/GPU, SSD).
-    nixos-hardware.url = "github:NixOS/nixos-hardware";
+    nixos-hardware = {
+      url = "github:NixOS/nixos-hardware";
+      inputs.nixpkgs.follows = "nixpkgs"; # only used by its own tests; don't download a 2nd nixpkgs
+    };
 
     # Weekly prebuilt "which package has this command" index: powers `,` (comma)
     # and the "command not found" hints.

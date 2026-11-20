@@ -16,7 +16,7 @@
 
 let
   # Parakeet needs the ONNX build of Voxtype.
-  voxtype = pkgs.voxtype.override { onnxSupport = true; };
+  voxtype = pkgs.voxtype-onnx;
 
   rev = "0bbb45a3365852604aef28b538a8f066f4ccaa85";
   modelFile = name: sha256: {

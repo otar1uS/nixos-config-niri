@@ -18,7 +18,12 @@
 #     rewrites it when you tap a button. It's created below with good
 #     defaults the first time, and a rebuild never overwrites it.
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   # Where the writable file lives.
@@ -51,7 +56,10 @@ in
       {
         profile.name = "laptop-only";
         profile.outputs = [
-          { criteria = laptop; status = "enable"; }
+          {
+            criteria = laptop;
+            status = "enable";
+          }
         ];
       }
 
@@ -59,8 +67,14 @@ in
       {
         profile.name = "docked";
         profile.outputs = [
-          { criteria = laptop; status = "disable"; }
-          { criteria = dell; status = "enable"; }
+          {
+            criteria = laptop;
+            status = "disable";
+          }
+          {
+            criteria = dell;
+            status = "enable";
+          }
         ];
       }
 
@@ -70,8 +84,14 @@ in
       {
         profile.name = "docked-other";
         profile.outputs = [
-          { criteria = laptop; status = "disable"; }
-          { criteria = "*"; status = "enable"; }
+          {
+            criteria = laptop;
+            status = "disable";
+          }
+          {
+            criteria = "*";
+            status = "enable";
+          }
         ];
       }
     ];

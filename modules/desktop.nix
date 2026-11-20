@@ -49,6 +49,11 @@
     };
   };
 
+  # The greeter finds sessions in /run/current-system/sw/share/wayland-sessions,
+  # which NixOS doesn't link by default. Without this the login screen
+  # would not list Umbriel.
+  environment.pathsToLink = [ "/share/wayland-sessions" ];
+
   # Unlocks the password keyring (Brave, VS Codium, GitHub logins, SSH keys)
   # with your login password. Seahorse ("Passwords and Keys") shows what's in it.
   services.gnome.gnome-keyring.enable = true;

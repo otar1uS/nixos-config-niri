@@ -43,7 +43,7 @@ let
   umbriel = osConfig.programs.umbriel.package;
   checked = pkgs.runCommand "umbriel-config-checked.toml" { nativeBuildInputs = [ umbriel ]; } ''
     export HOME=$TMPDIR XDG_CONFIG_HOME=$TMPDIR/config XDG_RUNTIME_DIR=$TMPDIR
-    umbriel -c ${configFile} config validate
+    umbriel config validate -c ${configFile}
     cp ${configFile} $out
   '';
 in

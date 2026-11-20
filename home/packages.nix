@@ -74,7 +74,7 @@
 
     # ── AI coding tools ──
     claude-code
-    gemini-cli
+    antigravity-cli # `agy` (Google's successor to gemini-cli)
 
     # ── this config ──
     nixfmt
