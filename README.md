@@ -67,25 +67,34 @@ chmod 700 ~/.ssh && chmod 600 ~/.ssh/* && chmod 644 ~/.ssh/*.pub
 ```
 
 - `.claude.json` and `.gemini` hold login tokens too: re-logging in
-  (`claude`, `gemini`) is the alternative to copying them.
+  (`claude`, `agy`) is the alternative to copying them.
 - Brave: turning on **Brave Sync** is an easier way to keep tabs and passwords.
 - `~/code/*/node_modules` and Unity `Library/` folders are rebuildable; add
   `--exclude node_modules --exclude Library` to skip them.
 - Noctalia's settings don't need a backup: this repo recreates them.
-- Push this repo first: `git push -u origin feat/umbriel-noctalia`.
+- **Commit and push this repo** (the installer clones it from GitHub, and
+  flakes only see committed files):
+  `git add -A && git commit -m "feat: umbriel + noctalia" && git push -u origin feat/umbriel-noctalia`
 
 ## 2. Install
 
-1. Download the **NixOS minimal ISO (unstable)** from
-   https://nixos.org/download, write it to a USB stick, boot it (F12 at the
-   Lenovo logo). Secure Boot must be off.
-2. Get online: `sudo nmtui` (Wi-Fi), then:
+1. Download the **NixOS minimal ISO** (x86_64) from
+   https://nixos.org/download and write it to a USB stick (on Fedora:
+   `sudo dd if=nixos-minimal-*.iso of=/dev/sdX bs=4M status=progress oflag=sync`,
+   with `/dev/sdX` the stick from `lsblk`). The ISO's version doesn't matter:
+   the flake brings its own nixos-unstable.
+2. In the BIOS (F1 at the Lenovo logo): **Secure Boot off**. Boot the stick
+   with **F12**.
+3. Get online: `sudo nmtui` -> "Activate a connection" -> your Wi-Fi.
+   (Or plug in your phone with USB tethering.)
+4. Then:
 
 ```sh
 sudo -i
 nix-shell -p git
-git clone https://github.com/otar1uS/nixos-config-niri /tmp/nixos-config
-cd /tmp/nixos-config && git switch feat/umbriel-noctalia
+git clone --branch feat/umbriel-noctalia https://github.com/otar1uS/nixos-config-niri /tmp/nixos-config
+cd /tmp/nixos-config
+# (If the repo is private again: nix-shell -p gh, gh auth login, gh repo clone ...)
 
 # Check the disk ID in disko.nix matches (KIOXIA ... 82DPG6HUQBQK):
 ls -l /dev/disk/by-id/ | grep nvme

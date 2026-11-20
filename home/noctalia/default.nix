@@ -85,11 +85,12 @@
         };
       };
 
-      # Vakiri, Kakheti: exact coordinates, so night light and weather work
-      # offline and nothing about you is looked up online.
+      # Vakiri, Kakheti, rounded to ~1 km (this repo is public; sunset times
+      # and weather don't need more). Fixed coordinates also mean nothing is
+      # looked up online.
       location = {
-        latitude = 41.64677;
-        longitude = 45.91743;
+        latitude = 41.65;
+        longitude = 45.92;
       };
       nightlight.enabled = true;
       weather = {
